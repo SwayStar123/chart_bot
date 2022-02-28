@@ -1,0 +1,15 @@
+[package]
+name = "chart_bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+eframe = "0.16.0"
+chrono = "0.4.19"
+ftx = { path = "../ftx" }
+rust_decimal = "1.20.0"
+dotenv = "0.15.0"
+tokio = { version = "1.15.0", features = ["full", "sync"] }
+futures = "0.3.19"
