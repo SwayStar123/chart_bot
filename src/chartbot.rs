@@ -23,6 +23,8 @@ impl ChartBot {
         let candles = client.request(GetHistoricalPrices::new_paged(
             "BTC/USD", resolution, Some(26280), Some(Utc::now()-Duration::seconds(26280*resolution.get_seconds() as i64)), Some(current_trunc(&resolution)-Duration::seconds(1)))).await.unwrap();
 
+        println!("{}", candles.len());
+        
         let curcandle = { 
             let vec = client.request(GetHistoricalPrices::new_paged(
             "BTC/USD",

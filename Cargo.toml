@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 eframe = "0.16.0"
 chrono = "0.4.19"
-ftx = { path = "../ftx" }
+ftx = "0.5.0"
 rust_decimal = "1.20.0"
 dotenv = "0.15.0"
 tokio = { version = "1.15.0", features = ["full", "sync"] }
