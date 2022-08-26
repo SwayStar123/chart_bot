@@ -7,10 +7,10 @@ use tokio::sync::mpsc::Receiver;
 
 pub struct ChartBot {
     pub resolution: Resolution,
-    pub rx: Receiver<Trade>,
+    // pub rx: Receiver<Trade>,
     pub client: Rest,
     pub candles: Vec<Candle>,
-    pub cur_candle: Candle,
+    // pub cur_candle: Candle,
     pub draw_mode: bool,
     pub pointer_coord: Option<(f64, f64)>,
     pub current_line: Option<((f64, f64), (f64, f64))>,
@@ -18,40 +18,53 @@ pub struct ChartBot {
 }
 
 impl ChartBot {
-    pub async fn new(client: Rest, resolution: Resolution, rx: Receiver<Trade>) -> Self {
+    pub async fn new(client: Rest, resolution: Resolution) -> Self {
 
-        let candles = client.request(GetHistoricalPrices::new_paged(
-            "BTC/USD", resolution, Some(26280), Some(Utc::now()-Duration::seconds(26280*resolution.get_seconds() as i64)), Some(current_trunc(&resolution)-Duration::seconds(1)))).await.unwrap();
+        // let candles = client.request(GetHistoricalPrices::new_paged(
+        //     "BTC/USD", resolution, Some(26280), Some(Utc::now()-Duration::seconds(26280*resolution.get_seconds() as i64)), Some(current_trunc(&resolution)-Duration::seconds(1)))).await.unwrap();
 
-        println!("{}", candles.len());
-        
-        let curcandle = { 
-            let vec = client.request(GetHistoricalPrices::new_paged(
-            "BTC/USD",
-            resolution,
-            Some(1),
-            None,
-            None,
-        )).await.unwrap();
-        if vec.len() == 0 {
-            let last_close = candles[candles.len()-1].close;
-            Candle {
-                start_time: current_trunc(&resolution),
-                open: last_close,
-                high: last_close,
-                low: last_close,
-                close: last_close,
-                volume: Decimal::from_u32(0).unwrap(),
-            }
-        } else {
-            vec[0]
+        // println!("{}", candles.len());
+        let file = std::fs::File::open("btcusd.csv").unwrap();
+        let mut recs = csv::Reader::from_reader(file);
+        let mut records = vec![];
+        for record in recs.records() {
+            records.push(record.unwrap());
         }
-    };
+        let candles = vec![];
+        for record in records {
+            for element in &record {
+                todo!();
+            }
+        }
+        
+        
+        // let curcandle = { 
+        //     let vec = client.request(GetHistoricalPrices::new_paged(
+        //     "BTC/USD",
+        //     resolution,
+        //     Some(1),
+        //     None,
+        //     None,
+        // )).await.unwrap();
+        // if vec.len() == 0 {
+        //     let last_close = candles[candles.len()-1].close;
+        //     Candle {
+        //         start_time: current_trunc(&resolution),
+        //         open: last_close,
+        //         high: last_close,
+        //         low: last_close,
+        //         close: last_close,
+        //         volume: Decimal::from_u32(0).unwrap(),
+        //     }
+        // } else {
+        //     vec[0]
+        // }
+    // };
         Self {
             client,
             resolution,
-            rx,
-            cur_candle: curcandle,
+            // rx,
+            // cur_candle: curcandle,
             candles,
             draw_mode: false,
             pointer_coord: None,
@@ -64,9 +77,9 @@ impl ChartBot {
         let mut boxdata = Vec::new();
 
         let mut candles = self.candles.clone();
-        let cand = self.cur_candle;
+        // let cand = self.cur_candle;
 
-        candles.push(cand);
+        // candles.push(cand);
 
         for candle in candles {
             boxdata.push(BoxElem::new(
@@ -150,9 +163,9 @@ impl ChartBot {
 impl App for ChartBot {
     fn update(&mut self, ctx: &eframe::egui::CtxRef, _frame: &eframe::epi::Frame) {
         CentralPanel::default().show(ctx, |ui| {
-            while let Ok(trade) = self.rx.try_recv() {
-                self.cur_candle = update_candle(self.cur_candle, trade);
-            }
+            // while let Ok(trade) = self.rx.try_recv() {
+            //     self.cur_candle = update_candle(self.cur_candle, trade);
+            // }
 
             if ui.button("Draw line").clicked() {
                 self.draw_mode = !self.draw_mode;
@@ -180,21 +193,21 @@ impl App for ChartBot {
             };
             
 
-            if current_trunc(&self.resolution) == self.cur_candle.start_time {
+            // if current_trunc(&self.resolution) == self.cur_candle.start_time {
 
-            } else {
-                self.candles.push(self.cur_candle);
-                self.cur_candle = {
-                    Candle {
-                        start_time: current_trunc(&self.resolution),
-                        open: self.cur_candle.close,
-                        high: self.cur_candle.close,
-                        low: self.cur_candle.close,
-                        close: self.cur_candle.close,
-                        volume: Decimal::from_u32(0).unwrap(),
-                    }
-                }
-            }
+            // } else {
+            //     self.candles.push(self.cur_candle);
+            //     self.cur_candle = {
+            //         Candle {
+            //             start_time: current_trunc(&self.resolution),
+            //             open: self.cur_candle.close,
+            //             high: self.cur_candle.close,
+            //             low: self.cur_candle.close,
+            //             close: self.cur_candle.close,
+            //             volume: Decimal::from_u32(0).unwrap(),
+            //         }
+            //     }
+            // }
 
             ctx.request_repaint();
         });
