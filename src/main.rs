@@ -1,16 +1,16 @@
-use dotenv::dotenv;
+// use dotenv::dotenv;
 use ftx::{
-    options::Options,
-    rest::{Rest, Resolution},
-    ws::{Ws, Result, Channel, Data},
+    // options::Options,
+    rest::Resolution,
+    // ws::{Result, Channel, Data},
 };
-use futures::stream::StreamExt;
+// use futures::stream::StreamExt;
 use chart_bot::chartbot::ChartBot;
-use eframe::{epi::NativeOptions, run_native};
+use eframe::{NativeOptions, run_native};
 
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     // dotenv().ok();
 
     // let mut websocket = Ws::connect(Options::from_env()).await?;
@@ -70,7 +70,10 @@ async fn main() -> Result<()> {
     // });
 
     let win_options = NativeOptions::default();
-    run_native(Box::new(app), win_options);
+    run_native(
+        "Chart_bot",
+        win_options,
+        Box::new(|_cc| Box::new(app)));
 
     // Ok(())
 }

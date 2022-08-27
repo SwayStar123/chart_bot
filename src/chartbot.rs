@@ -1,9 +1,8 @@
-use chrono::{Utc, DateTime, DurationRound, Duration};
-use eframe::{epi::App, egui::{CentralPanel, Ui, plot::{BoxElem, BoxSpread, BoxPlot, Plot, Legend, Line, Values, Value}, Color32, Stroke, InnerResponse, Response}};
-use ftx::rest::{Rest, Candle, Resolution, Trade, GetHistoricalPrices};
+// use chrono::{Utc, DateTime, DurationRound, Duration};
+use eframe::{App, egui::{self, CentralPanel, Ui, plot::{BoxElem, BoxSpread, BoxPlot, Plot, Legend, Line, Values, Value}, Color32, Stroke, InnerResponse, Response}};
+use ftx::rest::{Candle, Resolution};
 // use futures::channel::mpsc::Receiver;
-use rust_decimal::{Decimal, prelude::{ToPrimitive, FromPrimitive}};
-use tokio::sync::mpsc::Receiver;
+use rust_decimal::prelude::ToPrimitive;
 
 pub struct ChartBot {
     pub resolution: Resolution,
@@ -159,7 +158,7 @@ impl ChartBot {
 }
 
 impl App for ChartBot {
-    fn update(&mut self, ctx: &eframe::egui::CtxRef, _frame: &eframe::epi::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         CentralPanel::default().show(ctx, |ui| {
             // while let Ok(trade) = self.rx.try_recv() {
             //     self.cur_candle = update_candle(self.cur_candle, trade);
@@ -211,12 +210,41 @@ impl App for ChartBot {
         });
     }
 
-    fn setup(&mut self, _ctx: &eframe::egui::CtxRef, _frame: &eframe::epi::Frame, _storage: Option<&dyn eframe::epi::Storage>) {
-        
+    fn save(&mut self, _storage: &mut dyn eframe::Storage) {}
+
+    fn on_exit_event(&mut self) -> bool {
+        true
     }
 
-    fn name(&self) -> &str {
-        "ChartBot"
+    fn on_exit(&mut self, _gl: &eframe::glow::Context) {}
+
+    fn auto_save_interval(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(30)
+    }
+
+    fn max_size_points(&self) -> egui::Vec2 {
+        egui::Vec2::INFINITY
+    }
+
+    fn clear_color(&self, _visuals: &egui::Visuals) -> egui::Rgba {
+        // NOTE: a bright gray makes the shadows of the windows look weird.
+        // We use a bit of transparency so that if the user switches on the
+        // `transparent()` option they get immediate results.
+        egui::Color32::from_rgba_unmultiplied(12, 12, 12, 180).into()
+
+        // _visuals.window_fill() would also be a natural choice
+    }
+
+    fn persist_native_window(&self) -> bool {
+        true
+    }
+
+    fn persist_egui_memory(&self) -> bool {
+        true
+    }
+
+    fn warm_up_enabled(&self) -> bool {
+        false
     }
 }
 
@@ -231,56 +259,45 @@ pub fn straight_line(tuple: ((f64, f64), (f64, f64))) -> Line {
     )
 }
 
-pub fn current_trunc(resolution: &Resolution) -> DateTime<Utc>{
-    let now = chrono::Utc::now();
-    let trunced = match resolution {
-        Resolution::FifteenSeconds => now.duration_trunc(Duration::seconds(15)).unwrap(),
-        Resolution::Minute => now.duration_trunc(Duration::minutes(1)).unwrap(),
-        Resolution::FiveMinutes => now.duration_trunc(Duration::minutes(5)).unwrap(),
-        Resolution::FifteenMinutes => now.duration_trunc(Duration::minutes(15)).unwrap(),
-        Resolution::Hour => now.duration_trunc(Duration::hours(1)).unwrap(),
-        Resolution::FourHours => now.duration_trunc(Duration::hours(4)).unwrap(),
-        Resolution::Day => now.duration_trunc(Duration::days(1)).unwrap(),
-        Resolution::TwoDays => now.duration_trunc(Duration::days(2)).unwrap(),
-        Resolution::ThreeDays => now.duration_trunc(Duration::days(3)).unwrap(),
-        Resolution::FourDays => now.duration_trunc(Duration::days(4)).unwrap(),
-        Resolution::FiveDays => now.duration_trunc(Duration::days(5)).unwrap(),
-        Resolution::SixDays => now.duration_trunc(Duration::days(6)).unwrap(),
-        Resolution::Week => now.duration_trunc(Duration::days(7)).unwrap(),
-        Resolution::EightDays => now.duration_trunc(Duration::days(8)).unwrap(),
-        Resolution::NineDays => now.duration_trunc(Duration::days(9)).unwrap(),
-        Resolution::TenDays => now.duration_trunc(Duration::days(10)).unwrap(),
-        Resolution::ElevenDays => now.duration_trunc(Duration::days(11)).unwrap(),
-        Resolution::TwelveDays => now.duration_trunc(Duration::days(12)).unwrap(),
-        Resolution::ThirteenDays => now.duration_trunc(Duration::days(13)).unwrap(),
-        Resolution::FourteenDays => now.duration_trunc(Duration::days(14)).unwrap(),
-        Resolution::FifteenDays => now.duration_trunc(Duration::days(15)).unwrap(),
-        Resolution::SixteenDays => now.duration_trunc(Duration::days(16)).unwrap(),
-        Resolution::SeventeenDays => now.duration_trunc(Duration::days(17)).unwrap(),
-        Resolution::EighteenDays => now.duration_trunc(Duration::days(18)).unwrap(),
-        Resolution::NineteenDays => now.duration_trunc(Duration::days(19)).unwrap(),
-        Resolution::TwentyDays => now.duration_trunc(Duration::days(20)).unwrap(),
-        Resolution::TwentyOneDays => now.duration_trunc(Duration::days(21)).unwrap(),
-        Resolution::TwentyTwoDays => now.duration_trunc(Duration::days(22)).unwrap(),
-        Resolution::TwentyThreeDays => now.duration_trunc(Duration::days(23)).unwrap(),
-        Resolution::TwentyFourDays => now.duration_trunc(Duration::days(24)).unwrap(),
-        Resolution::TwentyFiveDays => now.duration_trunc(Duration::days(25)).unwrap(),
-        Resolution::TwentySixDays => now.duration_trunc(Duration::days(26)).unwrap(),
-        Resolution::TwentySevenDays => now.duration_trunc(Duration::days(27)).unwrap(),
-        Resolution::TwentyEightDays => now.duration_trunc(Duration::days(28)).unwrap(),
-        Resolution::TwentyNineDays => now.duration_trunc(Duration::days(29)).unwrap(),
-        Resolution::ThirtyDays => now.duration_trunc(Duration::days(30)).unwrap(),
-    };
-    trunced
-}
-
-fn update_candle(cand: Candle, trade: Trade) -> Candle {
-    Candle {
-        open: cand.open,
-        close: trade.price,
-        high: cand.high.max(trade.price),
-        low: cand.low.min(trade.price),
-        volume: cand.volume + trade.size,
-        start_time: cand.start_time,
-    }
-}
+// pub fn current_trunc(resolution: &Resolution) -> DateTime<Utc>{
+//     let now = chrono::Utc::now();
+//     let trunced = match resolution {
+//         Resolution::FifteenSeconds => now.duration_trunc(Duration::seconds(15)).unwrap(),
+//         Resolution::Minute => now.duration_trunc(Duration::minutes(1)).unwrap(),
+//         Resolution::FiveMinutes => now.duration_trunc(Duration::minutes(5)).unwrap(),
+//         Resolution::FifteenMinutes => now.duration_trunc(Duration::minutes(15)).unwrap(),
+//         Resolution::Hour => now.duration_trunc(Duration::hours(1)).unwrap(),
+//         Resolution::FourHours => now.duration_trunc(Duration::hours(4)).unwrap(),
+//         Resolution::Day => now.duration_trunc(Duration::days(1)).unwrap(),
+//         Resolution::TwoDays => now.duration_trunc(Duration::days(2)).unwrap(),
+//         Resolution::ThreeDays => now.duration_trunc(Duration::days(3)).unwrap(),
+//         Resolution::FourDays => now.duration_trunc(Duration::days(4)).unwrap(),
+//         Resolution::FiveDays => now.duration_trunc(Duration::days(5)).unwrap(),
+//         Resolution::SixDays => now.duration_trunc(Duration::days(6)).unwrap(),
+//         Resolution::Week => now.duration_trunc(Duration::days(7)).unwrap(),
+//         Resolution::EightDays => now.duration_trunc(Duration::days(8)).unwrap(),
+//         Resolution::NineDays => now.duration_trunc(Duration::days(9)).unwrap(),
+//         Resolution::TenDays => now.duration_trunc(Duration::days(10)).unwrap(),
+//         Resolution::ElevenDays => now.duration_trunc(Duration::days(11)).unwrap(),
+//         Resolution::TwelveDays => now.duration_trunc(Duration::days(12)).unwrap(),
+//         Resolution::ThirteenDays => now.duration_trunc(Duration::days(13)).unwrap(),
+//         Resolution::FourteenDays => now.duration_trunc(Duration::days(14)).unwrap(),
+//         Resolution::FifteenDays => now.duration_trunc(Duration::days(15)).unwrap(),
+//         Resolution::SixteenDays => now.duration_trunc(Duration::days(16)).unwrap(),
+//         Resolution::SeventeenDays => now.duration_trunc(Duration::days(17)).unwrap(),
+//         Resolution::EighteenDays => now.duration_trunc(Duration::days(18)).unwrap(),
+//         Resolution::NineteenDays => now.duration_trunc(Duration::days(19)).unwrap(),
+//         Resolution::TwentyDays => now.duration_trunc(Duration::days(20)).unwrap(),
+//         Resolution::TwentyOneDays => now.duration_trunc(Duration::days(21)).unwrap(),
+//         Resolution::TwentyTwoDays => now.duration_trunc(Duration::days(22)).unwrap(),
+//         Resolution::TwentyThreeDays => now.duration_trunc(Duration::days(23)).unwrap(),
+//         Resolution::TwentyFourDays => now.duration_trunc(Duration::days(24)).unwrap(),
+//         Resolution::TwentyFiveDays => now.duration_trunc(Duration::days(25)).unwrap(),
+//         Resolution::TwentySixDays => now.duration_trunc(Duration::days(26)).unwrap(),
+//         Resolution::TwentySevenDays => now.duration_trunc(Duration::days(27)).unwrap(),
+//         Resolution::TwentyEightDays => now.duration_trunc(Duration::days(28)).unwrap(),
+//         Resolution::TwentyNineDays => now.duration_trunc(Duration::days(29)).unwrap(),
+//         Resolution::ThirtyDays => now.duration_trunc(Duration::days(30)).unwrap(),
+//     };
+//     trunced
+// }
