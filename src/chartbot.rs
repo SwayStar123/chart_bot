@@ -50,10 +50,10 @@ impl ChartBot {
                     } else {
                         Color32::from_rgb(255,0,0)
                     }
-                }).whisker_width(5.0)
+                }).whisker_width(0.)
                 .box_width(0.7*40.0)
                 .stroke(Stroke {
-                    width: 0.02,
+                    width: 0.05,
                     color: {
                         if candle.close > candle.open {
                             Color32::from_rgb(0,255,0)
