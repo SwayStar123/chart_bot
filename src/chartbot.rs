@@ -9,7 +9,7 @@ pub struct ChartBot {
     pub resolution: Resolution,
     // pub rx: Receiver<Trade>,
     // pub client: Rest,
-    pub candles: Vec<Candle>,
+    pub candles: Vec<BoxElem>,
     // pub cur_candle: Candle,
     pub draw_mode: bool,
     pub pointer_coord: Option<(f64, f64)>,
@@ -27,12 +27,44 @@ impl ChartBot {
         let file = std::fs::File::open("btcusd.csv").unwrap();
         let mut recs = csv::Reader::from_reader(file);
         let recs = recs.deserialize();
-        let mut candles = vec![];
+        let mut candles = Vec::new();
         for rec in recs {
             let record: Candle = rec.unwrap();
             candles.push(record);
         }
+        let mut boxdata = Vec::new();
         
+        for candle in candles {
+            boxdata.push(BoxElem::new(
+                candle.start_time.timestamp() as f64/resolution.get_seconds() as f64 * 40.0,
+                BoxSpread::new(
+                    candle.low.to_f64().unwrap(),
+                    (std::cmp::min(candle.open, candle.close)).to_f64().unwrap(),
+                    (candle.open+candle.close).to_f64().unwrap()/2.0,
+                    (std::cmp::max(candle.open, candle.close)).to_f64().unwrap(),
+                    candle.high.to_f64().unwrap(),
+                ),
+                ).fill({
+                    if candle.close > candle.open {
+                        Color32::from_rgb(0,255,0)
+                    } else {
+                        Color32::from_rgb(255,0,0)
+                    }
+                }).whisker_width(5.0)
+                .box_width(0.7*40.0)
+                .stroke(Stroke {
+                    width: 0.02,
+                    color: {
+                        if candle.close > candle.open {
+                            Color32::from_rgb(0,255,0)
+                        } else {
+                            Color32::from_rgb(255,0,0)
+                        }
+                    }
+                }),
+            );
+            
+        }
         
         
         // let curcandle = { 
@@ -62,7 +94,7 @@ impl ChartBot {
             resolution,
             // rx,
             // cur_candle: curcandle,
-            candles,
+            candles: boxdata,
             draw_mode: false,
             pointer_coord: None,
             current_line: None,
@@ -71,44 +103,13 @@ impl ChartBot {
     }
 
     fn candlesticks(&mut self, ui: &mut Ui) -> Response {
-        let mut boxdata = Vec::new();
+        let boxdata = self.candles.clone();
 
-        let mut candles = self.candles.clone();
         // let cand = self.cur_candle;
 
         // candles.push(cand);
 
-        for candle in candles {
-            boxdata.push(BoxElem::new(
-                candle.start_time.timestamp() as f64/self.resolution.get_seconds() as f64 * 40.0,
-                BoxSpread::new(
-                    candle.low.to_f64().unwrap(),
-                    (std::cmp::min(candle.open, candle.close)).to_f64().unwrap(),
-                    (candle.open+candle.close).to_f64().unwrap()/2.0,
-                    (std::cmp::max(candle.open, candle.close)).to_f64().unwrap(),
-                    candle.high.to_f64().unwrap(),
-                ),
-                ).fill({
-                    if candle.close > candle.open {
-                        Color32::from_rgb(0,255,0)
-                    } else {
-                        Color32::from_rgb(255,0,0)
-                    }
-                }).whisker_width(0.)
-                .box_width(0.7*40.0)
-                .stroke(Stroke {
-                    width: 0.02,
-                    color: {
-                        if candle.close > candle.open {
-                            Color32::from_rgb(0,255,0)
-                        } else {
-                            Color32::from_rgb(255,0,0)
-                        }
-                    }
-                }),
-            );
-            
-        }
+        
 
         let chart = BoxPlot::new(boxdata).vertical();
 
