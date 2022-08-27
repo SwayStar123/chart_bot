@@ -8,7 +8,7 @@ use tokio::sync::mpsc::Receiver;
 pub struct ChartBot {
     pub resolution: Resolution,
     // pub rx: Receiver<Trade>,
-    pub client: Rest,
+    // pub client: Rest,
     pub candles: Vec<Candle>,
     // pub cur_candle: Candle,
     pub draw_mode: bool,
@@ -18,7 +18,7 @@ pub struct ChartBot {
 }
 
 impl ChartBot {
-    pub async fn new(client: Rest, resolution: Resolution) -> Self {
+    pub async fn new(resolution: Resolution) -> Self {
 
         // let candles = client.request(GetHistoricalPrices::new_paged(
         //     "BTC/USD", resolution, Some(26280), Some(Utc::now()-Duration::seconds(26280*resolution.get_seconds() as i64)), Some(current_trunc(&resolution)-Duration::seconds(1)))).await.unwrap();
@@ -26,16 +26,13 @@ impl ChartBot {
         // println!("{}", candles.len());
         let file = std::fs::File::open("btcusd.csv").unwrap();
         let mut recs = csv::Reader::from_reader(file);
-        let mut records = vec![];
-        for record in recs.records() {
-            records.push(record.unwrap());
+        let recs = recs.deserialize();
+        let mut candles = vec![];
+        for rec in recs {
+            let record: Candle = rec.unwrap();
+            candles.push(record);
         }
-        let candles = vec![];
-        for record in records {
-            for element in &record {
-                todo!();
-            }
-        }
+        
         
         
         // let curcandle = { 
@@ -61,7 +58,7 @@ impl ChartBot {
         // }
     // };
         Self {
-            client,
+            // client,
             resolution,
             // rx,
             // cur_candle: curcandle,

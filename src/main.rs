@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
 
     // let client = Rest::new(Options::from_env());
 
-    let app = ChartBot::new(client, Resolution::Hour).await;
+    let app = ChartBot::new(Resolution::Minute).await;
 
     // tokio::spawn(async move {
     //     while let Some(trade) = rx.recv().await {
